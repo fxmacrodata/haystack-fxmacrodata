@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling>=1.31,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fxmacrodata-haystack"
+version = "0.1.0"
+description = "Native FXMacroData research integration for Haystack"
+readme = "README.md"
+requires-python = ">=3.10,<3.15"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = ["fxmacrodata-public-client==0.1.0", "haystack-ai>=3.1.1,<4"]
+
+[project.urls]
+Homepage = "https://fxmacrodata.com"
+Documentation = "https://fxmacrodata.com/documentation/reference"
+
+[project.optional-dependencies]
+test = ["pytest>=8", "pytest-xdist>=3"]
+
+[tool.hatch.build]
+ignore-vcs = true
+exclude = ["**/__pycache__/**", "**/*.pyc"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fxmacrodata_haystack"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/fxmacrodata_haystack/**", "README.md", "LICENSE", "pyproject.toml", "examples/**", "tests/**", "CAPABILITIES.md", "PUBLIC_FILES.json", ".gitignore"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"

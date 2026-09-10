@@ -1,0 +1,14 @@
+[
+  ".gitignore",
+  "CAPABILITIES.md",
+  "LICENSE",
+  "PUBLIC_FILES.json",
+  "README.md",
+  "examples/tool_invocation.py",
+  "examples/usd_macro_brief.py",
+  "pyproject.toml",
+  "src/fxmacrodata_haystack/__init__.py",
+  "src/fxmacrodata_haystack/integration.py",
+  "src/fxmacrodata_haystack/py.typed",
+  "tests/test_integration.py"
+]
