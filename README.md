@@ -1,10 +1,12 @@
 # FXMacroData for Haystack
 
-Build macro-research pipelines with official economic observations, release calendars and searchable Haystack Documents. The public USD catalogue, history and release-calendar workflow needs no API key, account or credit card.
+Build Haystack research pipelines with official economic observations, release calendars and searchable Documents that retain their source metadata.
+
+[Subscribe to FXMacroData](https://fxmacrodata.com/subscribe?utm_source=github&utm_medium=referral&utm_campaign=open_source_integrations&utm_content=haystack_subscribe) for non-USD data, full available history, FX, commodities and positioning. Use the public USD workflow to evaluate the integration before connecting your subscription.
 
 [Explore FXMacroData](https://fxmacrodata.com/?utm_source=github&utm_medium=referral&utm_campaign=open_source_integrations&utm_content=haystack_readme) · [API documentation](https://fxmacrodata.com/documentation/reference?utm_source=github&utm_medium=referral&utm_campaign=open_source_integrations&utm_content=haystack_docs)
 
-The public example requests the most recent 90 days of USD history. Broader history and protected datasets follow the documented access limits.
+The public USD catalogue, recent macro history and release calendar support evaluation without an API key. The history example requests the most recent 90 days. Data availability varies by series; your subscription and its terms govern protected access.
 
 ## Install from source
 
@@ -34,7 +36,7 @@ For Haystack Agents, use `create_tools()` to obtain 72 separate `FXMacroDataTool
 
 Run `python examples/usd_macro_brief.py` to build and execute a real three-component Pipeline without a language model. Run `python examples/tool_invocation.py` to call a native Tool directly.
 
-## Credentials and persistence
+## Subscription credentials and persistence
 
 The default is Haystack `Secret.from_env_var("FXMACRODATA_API_KEY", strict=False)`. An absent variable keeps public USD access available. Set `public_only=True` to ignore ambient credentials. Use `Secret.from_env_var` with your application's own secret-variable name if desired. Environment references serialize into saved pipelines; credential values do not. Haystack deliberately refuses to serialize `Secret.from_token` values.
 
