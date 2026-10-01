@@ -1,6 +1,4 @@
 [
-  ".github/workflows/release.yml",
-  ".github/workflows/test.yml",
   ".gitignore",
   "LICENSE",
   "PUBLIC_FILES.json",
