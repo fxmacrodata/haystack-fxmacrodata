@@ -1,55 +1,91 @@
-# FXMacroData for Haystack
+# fxmacrodata-haystack
 
-Build Haystack research pipelines with official economic observations, release calendars and searchable Documents that retain their source metadata.
+[![PyPI - Version](https://img.shields.io/pypi/v/fxmacrodata-haystack.svg)](https://pypi.org/project/fxmacrodata-haystack)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/fxmacrodata-haystack.svg)](https://pypi.org/project/fxmacrodata-haystack)
 
-[Subscribe to FXMacroData](https://fxmacrodata.com/subscribe?utm_source=github&utm_medium=referral&utm_campaign=open_source_integrations&utm_content=haystack_subscribe) for non-USD data, full available history, FX, commodities and positioning. Use the public USD workflow to evaluate the integration before connecting your subscription.
+[Haystack](https://haystack.deepset.ai/) components and agent tools for [FXMacroData](https://fxmacrodata.com/?utm_source=github&utm_medium=referral&utm_campaign=haystack-fxmacrodata&utm_content=readme), an API for macroeconomic releases, central-bank data, economic calendars and FX rates across 22 currencies, sourced from official publishers.
 
-[Explore FXMacroData](https://fxmacrodata.com/?utm_source=github&utm_medium=referral&utm_campaign=open_source_integrations&utm_content=haystack_readme) · [API documentation](https://fxmacrodata.com/documentation/reference?utm_source=github&utm_medium=referral&utm_campaign=open_source_integrations&utm_content=haystack_docs)
+- `FXMacroDataFetcher` turns an endpoint response into Haystack `Document`s, one per row.
+- `FXMacroDataTool` and `FXMacroDataToolset` expose the same endpoints to Haystack Agents.
 
-The public USD catalogue, recent macro history and release calendar support evaluation without an API key. The history example requests the most recent 90 days. Data availability varies by series; your subscription and its terms govern protected access.
-
-## Install from source
-
-With the companion client and this project in sibling directories:
+## Installation
 
 ```bash
-python -m pip install ./fxmacrodata-public-client ./haystack-fxmacrodata
+pip install fxmacrodata-haystack
 ```
 
-This command uses source packages, without assuming a package-registry publication. Requires Python 3.10+ and Haystack 3.1.1+.
+## Access
 
-## Pipeline
+USD data works without an API key: the most recent 90 days of history, with new releases delayed by 15 minutes and roughly 100 requests a day. Other currencies, FX rates, commodities and predictions need a key, which you can get from the [subscription page](https://fxmacrodata.com/subscribe?utm_source=github&utm_medium=referral&utm_campaign=haystack-fxmacrodata&utm_content=subscribe).
+
+The components read the key from the `FXMACRODATA_API_KEY` environment variable and send it in the `X-API-Key` header. Pass `api_key=Secret.from_env_var("OTHER_NAME")` to use a different variable. The key is never written into serialized pipelines.
+
+## Usage
+
+### Fetcher
 
 ```python
-from haystack import Pipeline
-from fxmacrodata_haystack import FXMacroDataFetcher
+from haystack_integrations.components.fetchers.fxmacrodata import FXMacroDataFetcher
 
-pipeline = Pipeline()
-pipeline.add_component("macro", FXMacroDataFetcher(operation="indicator_history"))
-result = pipeline.run({"macro": {"arguments": {"currency": "USD", "indicator": "inflation"}}})
-documents = result["macro"]["documents"]
+fetcher = FXMacroDataFetcher(operation="indicator_history")
+result = fetcher.run(arguments={"currency": "USD", "indicator": "inflation", "start_date": "2026-01-01"})
+
+for document in result["documents"]:
+    print(document.meta["date"], document.meta["val"])
+print(result["meta"]["pagination"])
 ```
 
-Connect `documents` to document writers, retrievers, joiners or prompt builders. Each Document contains a complete record and source metadata. `data` retains the unmodified endpoint response; `records` provides a tabular view. The `error` output distinguishes an unsuccessful request from a valid empty result.
+Each `Document` holds one row of the response as JSON, unchanged. Scalar fields of the row (`date`, `val`, `announcement_datetime`, `source_url` and so on) are copied into `Document.meta`, together with `operation`, so they work with document store filters. A `val` of `None` means the publisher released no value for that period; it is passed through rather than replaced.
 
-For Haystack Agents, use `create_tools()` to obtain 72 separate `FXMacroDataTool` objects with complete documented input schemas. For a smaller agent context, pass `operations=["data_catalogue", "indicator_history", "release_calendar"]`. See [CAPABILITIES.md](CAPABILITIES.md).
+`meta` carries the rest of the response, such as `pagination`, `source`, and `freemium_delay` when the request was made without a key.
 
-Run `python examples/usd_macro_brief.py` to build and execute a real three-component Pipeline without a language model. Run `python examples/tool_invocation.py` to call a native Tool directly.
+Paginated endpoints are read with `limit`/`offset` in pages of up to 100 rows until the API reports `has_more: false`. In `arguments`, `limit` is the total number of rows you want; without it the fetcher stops at `max_records` (500 by default).
 
-## Subscription credentials and persistence
+| `operation` | Endpoint | Paginated |
+| --- | --- | --- |
+| `data_catalogue` | `GET /v1/data_catalogue/{currency}` | no |
+| `indicator_history` | `GET /v1/announcements/{currency}/{indicator}` | yes |
+| `latest_announcements` | `GET /v1/announcements/{currency}/latest` | no |
+| `release_calendar` | `GET /v1/calendar/{currency}` | no |
+| `forex` | `GET /v1/forex/{base}/{quote}` | yes |
+| `event_predictions` | `GET /v1/predictions/{currency}/{indicator}` | yes |
+| `commodities` | `GET /v1/commodities/{indicator}` | yes |
+| `cot` | `GET /v1/cot/{currency}` | yes |
+| `press_releases` | `GET /v1/press-releases/{currency}` | yes |
 
-The default is Haystack `Secret.from_env_var("FXMACRODATA_API_KEY", strict=False)`. An absent variable keeps public USD access available. Set `public_only=True` to ignore ambient credentials. Use `Secret.from_env_var` with your application's own secret-variable name if desired. Environment references serialize into saved pipelines; credential values do not. Haystack deliberately refuses to serialize `Secret.from_token` values.
+Path parameters go in `arguments` next to the query parameters. Any other query parameter documented in the [API reference](https://fxmacrodata.com/documentation/reference?utm_source=github&utm_medium=referral&utm_campaign=haystack-fxmacrodata&utm_content=docs) is passed through as is. An error response raises `FXMacroDataError` with the HTTP status and the API's error code, for example `api_key_required`.
 
-When loading a trusted saved pipeline, allow this specific extension module: `Pipeline.loads(saved_yaml, allowed_modules=["fxmacrodata_haystack.integration"])`. This preserves Haystack's normal deserialization protection.
+### Agent tools
 
-Preserve units, timestamp flags, provenance, empty results and the distinction between FXMacroData-generated forecasts and market consensus. The plugin preserves MCP visual resources but does not render MCP Apps.
+```python
+from haystack.components.agents import Agent
+from haystack.components.generators.chat import OpenAIChatGenerator
+from haystack.dataclasses import ChatMessage
 
-README links contain static referral parameters. This integration adds no analytics SDK, identifier or click beacon.
+from haystack_integrations.tools.fxmacrodata import FXMacroDataToolset
 
-## Test
+tools = FXMacroDataToolset(operations=["data_catalogue", "indicator_history", "release_calendar"])
+agent = Agent(chat_generator=OpenAIChatGenerator(model="gpt-5-mini"), tools=tools)
+
+result = agent.run(messages=[ChatMessage.from_user("What was the last US CPI print and when is the next release?")])
+print(result["last_message"].text)
+```
+
+Tools are named `fxmacrodata_<operation>`. The model receives the rows and the response metadata as JSON. Tools return at most 100 rows unless the model asks for more with `limit`; change this with `max_records`.
+
+More examples are in [`examples/`](examples/).
+
+## Development
 
 ```bash
-python -m pytest tests -n 8 --dist load
+pip install hatch
+
+hatch run fmt-check         # lint
+hatch run test:types        # mypy
+hatch run test:unit         # unit tests, no network
+hatch run test:integration  # calls the live API; USD tests run without a key
 ```
 
-Code is Apache-2.0 licensed. API access, data use and brand rights remain governed by their applicable terms.
+## License
+
+`fxmacrodata-haystack` is distributed under the terms of the [Apache-2.0](LICENSE) license. Use of the FXMacroData API is governed by its own terms.

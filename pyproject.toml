@@ -1,38 +1,145 @@
+# SPDX-FileCopyrightText: 2026-present FXMacroData <info@fxmacrodata.com>
+#
+# SPDX-License-Identifier: Apache-2.0
+
 [build-system]
-requires = ["hatchling>=1.31,<2"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
 name = "fxmacrodata-haystack"
 version = "0.1.0"
-description = "Native FXMacroData research integration for Haystack"
+description = "Haystack fetcher and agent tools for FXMacroData macroeconomic, release-calendar and FX data"
 readme = "README.md"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
-dependencies = ["fxmacrodata-public-client==0.1.0", "haystack-ai>=3.1.1,<4"]
+keywords = ["haystack", "fxmacrodata", "macroeconomics", "economic-calendar", "forex", "agents", "tools"]
+authors = [{ name = "FXMacroData", email = "info@fxmacrodata.com" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = ["haystack-ai>=3.0.0", "requests>=2.28"]
 
 [project.urls]
-Homepage = "https://fxmacrodata.com"
-Documentation = "https://fxmacrodata.com/documentation/reference"
-
-[project.optional-dependencies]
-test = ["pytest>=8", "pytest-xdist>=3"]
-
-[tool.hatch.build]
-ignore-vcs = true
-exclude = ["**/__pycache__/**", "**/*.pyc"]
+Homepage = "https://fxmacrodata.com/?utm_source=pypi&utm_medium=referral&utm_campaign=haystack-fxmacrodata&utm_content=pypi"
+Documentation = "https://github.com/fxmacrodata/haystack-fxmacrodata#readme"
+Issues = "https://github.com/fxmacrodata/haystack-fxmacrodata/issues"
+Source = "https://github.com/fxmacrodata/haystack-fxmacrodata"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/fxmacrodata_haystack"]
+packages = ["src/haystack_integrations"]
 
 [tool.hatch.build.targets.sdist]
-include = ["src/fxmacrodata_haystack/**", "README.md", "LICENSE", "pyproject.toml", "examples/**", "tests/**", "CAPABILITIES.md", "PUBLIC_FILES.json", ".gitignore"]
+include = ["src/haystack_integrations", "tests", "examples", "README.md", "LICENSE", "pyproject.toml"]
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-addopts = "-q"
+[tool.hatch.envs.default]
+installer = "uv"
+dependencies = ["ruff"]
+
+[tool.hatch.envs.default.scripts]
+fmt = "ruff check --fix {args:.} && ruff format {args:.}"
+fmt-check = "ruff check {args:.} && ruff format --check {args:.}"
+
+[tool.hatch.envs.test]
+dependencies = ["pytest", "pytest-cov", "mypy", "types-requests"]
+
+[tool.hatch.envs.test.scripts]
+unit = 'pytest -m "not integration" {args:tests}'
+integration = 'pytest -m "integration" {args:tests}'
+all = "pytest {args:tests}"
+cov = "pytest --cov=haystack_integrations {args:tests}"
+types = "mypy -p haystack_integrations.components.fetchers.fxmacrodata -p haystack_integrations.tools.fxmacrodata {args}"
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+  "A",
+  "ANN",
+  "ARG",
+  "B",
+  "C",
+  "D102",
+  "D103",
+  "D205",
+  "D209",
+  "D213",
+  "D417",
+  "D419",
+  "DTZ",
+  "E",
+  "EM",
+  "F",
+  "I",
+  "ICN",
+  "ISC",
+  "N",
+  "PLC",
+  "PLE",
+  "PLR",
+  "PLW",
+  "Q",
+  "RUF",
+  "S",
+  "T",
+  "TID",
+  "UP",
+  "W",
+  "YTT",
+]
+ignore = [
+    "B027",
+    "S105",
+    "S106",
+    "S107",
+    "C901",
+    "PLR0911",
+    "PLR0912",
+    "PLR0913",
+    "PLR0915",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["haystack_integrations"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["D", "PLR2004", "S101", "TID252", "ANN", "ARG"]
+"examples/**/*" = ["D", "T201", "ANN"]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_incomplete_defs = true
+
+[[tool.mypy.overrides]]
+module = ["haystack.*"]
+ignore_missing_imports = true
+
+[tool.coverage.run]
+source = ["haystack_integrations"]
+branch = true
+parallel = false
+
+[tool.coverage.report]
+omit = ["*/tests/*", "*/__init__.py"]
+show_missing = true
+exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+markers = ["integration: tests that call the live FXMacroData API"]
+addopts = ["--import-mode=importlib", "--strict-markers"]
