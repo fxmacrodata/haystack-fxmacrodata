@@ -222,7 +222,7 @@ class TestRun:
         response = _response(None, status_code=502)
         response.json.side_effect = ValueError("not json")
         with patch("requests.Session.get", return_value=response):
-            with pytest.raises(FXMacroDataError, match="HTTP 502$"):
+            with pytest.raises(FXMacroDataError, match=r"HTTP 502$"):
                 fetcher.run(arguments={"currency": "USD", "indicator": "inflation"})
 
 

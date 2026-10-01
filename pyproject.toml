@@ -100,15 +100,22 @@ select = [
   "YTT",
 ]
 ignore = [
+    # Allow non-abstract empty methods in abstract base classes
     "B027",
+    # Allow function calls in argument defaults (common Haystack pattern for Secret.from_env_var)
+    "B008",
+    # Ignore checks for possible passwords
     "S105",
     "S106",
     "S107",
+    # Ignore complexity
     "C901",
     "PLR0911",
     "PLR0912",
     "PLR0913",
     "PLR0915",
+    # Allow `Any` for JSON payloads and tool arguments
+    "ANN401",
 ]
 
 [tool.ruff.lint.isort]
@@ -119,7 +126,7 @@ ban-relative-imports = "parents"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*" = ["D", "PLR2004", "S101", "TID252", "ANN", "ARG"]
-"examples/**/*" = ["D", "T201", "ANN"]
+"examples/**/*" = ["D", "T201", "ANN", "DTZ"]
 
 [tool.mypy]
 check_untyped_defs = true
