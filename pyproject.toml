@@ -32,7 +32,7 @@ classifiers = [
 dependencies = ["haystack-ai>=3.0.0", "requests>=2.28"]
 
 [project.urls]
-Homepage = "https://fxmacrodata.com/?utm_source=pypi&utm_medium=referral&utm_campaign=haystack-fxmacrodata&utm_content=pypi"
+Homepage = "https://fxmacrodata.com/?utm_source=pypi&utm_medium=referral&utm_campaign=haystack-fxmacrodata&utm_content=homepage"
 Documentation = "https://github.com/fxmacrodata/haystack-fxmacrodata#readme"
 Issues = "https://github.com/fxmacrodata/haystack-fxmacrodata/issues"
 Source = "https://github.com/fxmacrodata/haystack-fxmacrodata"

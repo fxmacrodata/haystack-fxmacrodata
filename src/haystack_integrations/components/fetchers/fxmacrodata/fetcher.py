@@ -48,7 +48,7 @@ class FXMacroDataFetcher:
 
     USD data is readable without an API key (the most recent 90 days of history, with releases delayed by
     15 minutes). Other currencies, FX rates, commodities and predictions need a key from
-    [fxmacrodata.com](https://fxmacrodata.com/subscribe).
+    [fxmacrodata.com](https://fxmacrodata.com/subscribe?utm_source=haystack&utm_medium=integration&utm_campaign=haystack-fxmacrodata&utm_content=subscribe).
 
     ### Usage example
 
